@@ -10,34 +10,122 @@ const FormSection = ({ title, children }) => (
     </div>
 );
 
-const InputGroup = ({ label, value, onChange, placeholder, type = "text", as = "input" }) => (
-    <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-        {as === "textarea" ? (
-            <textarea
-                className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all text-sm min-h-[100px]"
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-            />
-        ) : (
-            <input
-                type={type}
-                className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all text-sm"
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-            />
-        )}
-    </div>
-);
+const InputGroup = ({ label, value, onChange, placeholder, type = "text", as = "input", guidance = false, formatBullets = false }) => {
+    // Bullet Guidance Logic
+    const getGuidance = (text) => {
+        if (!text || !guidance) return null;
+
+        const issues = [];
+        const lowerText = text.toLowerCase();
+
+        // Check for action verbs
+        const actionVerbs = ['built', 'developed', 'designed', 'implemented', 'led', 'improved', 'created', 'optimized', 'automated', 'managed', 'orchestrated', 'engineered'];
+        // Simple check: does the text start with any action verb?
+        const firstWord = lowerText.trim().split(' ')[0];
+        const startsWithAction = actionVerbs.some(verb => lowerText.trim().startsWith(verb));
+
+        if (!startsWithAction && text.length > 5) {
+            issues.push("Start with a strong action verb (e.g., Built, Developed).");
+        }
+
+        // Check for numbers
+        const hasNumbers = /\d+|%|\$|k\b/i.test(text);
+        if (!hasNumbers && text.length > 20) {
+            issues.push("Add measurable impact (numbers, %, $).");
+        }
+
+        return issues;
+    };
+
+    // Bullet Formatting Logic
+    const toggleBullets = () => {
+        if (!value) return;
+
+        const lines = value.split('\n').filter(line => line.trim() !== '');
+
+        // Check if already has bullets
+        const hasBullets = lines.every(line => line.trim().startsWith('•') || line.trim().startsWith('-') || line.trim().startsWith('*'));
+
+        let newValue;
+        if (hasBullets) {
+            // Remove bullets
+            newValue = lines.map(line =>
+                line.trim().replace(/^[•\-\*]\s*/, '')
+            ).join('\n');
+        } else {
+            // Add bullets
+            newValue = lines.map(line =>
+                line.trim().startsWith('•') ? line : `• ${line.trim()}`
+            ).join('\n');
+        }
+
+        // Trigger onChange with synthetic event
+        onChange({ target: { value: newValue } });
+    };
+
+    const issues = getGuidance(value);
+    const hasBullets = value && value.split('\n').some(line => line.trim().startsWith('•'));
+
+    return (
+        <div className="mb-4">
+            <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">{label}</label>
+                {formatBullets && (
+                    <button
+                        type="button"
+                        onClick={toggleBullets}
+                        className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50 transition-colors text-gray-600 font-medium"
+                        title={hasBullets ? "Remove bullet points" : "Add bullet points"}
+                    >
+                        {hasBullets ? '✓ Bullets' : '+ Bullets'}
+                    </button>
+                )}
+            </div>
+            {as === "textarea" ? (
+                <textarea
+                    className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all text-sm min-h-[100px]"
+                    value={value}
+                    onChange={onChange}
+                    placeholder={placeholder}
+                />
+            ) : (
+                <input
+                    type={type}
+                    className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all text-sm"
+                    value={value}
+                    onChange={onChange}
+                    placeholder={placeholder}
+                />
+            )}
+            {/* Display Guidance */}
+            {guidance && issues && issues.length > 0 && (
+                <div className="mt-2 flex flex-col gap-1">
+                    {issues.map((issue, i) => (
+                        <span key={i} className="text-xs text-amber-600 flex items-center gap-1 font-medium">
+                            <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" /> {issue}
+                        </span>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 const Builder = () => {
-    const { resumeData, atsScore, suggestions, updatePersonalInfo, updateSection, loadSampleData } = useResume();
+    const {
+        resumeData,
+        atsScore,
+        suggestions,
+        selectedTemplate,
+        setSelectedTemplate,
+        updatePersonalInfo,
+        updateSection,
+        loadSampleData
+    } = useResume();
 
     // Helper to add empty items
     const addExperience = () => {
-        updateSection('experience', [...resumeData.experience, { id: Date.now(), company: '', role: '', duration: '', description: '' }]);
+        updateSection('experience', [...resumeData.experience, { id: Date.now(), company: '', role: '', duration: '', location: '', description: '' }]);
     };
 
     const addProject = () => {
@@ -48,7 +136,7 @@ const Builder = () => {
         updateSection('education', [...resumeData.education, { id: Date.now(), institution: '', degree: '', year: '' }]);
     };
 
-    // Helper to remove items - simple implementation for now
+    // Helper to remove items
     const removeExperience = (index) => {
         const newExp = [...resumeData.experience];
         newExp.splice(index, 1);
@@ -73,6 +161,25 @@ const Builder = () => {
             <div className="w-1/2 overflow-y-auto border-r border-gray-100 bg-white">
                 <div className="p-8 max-w-2xl mx-auto">
 
+                    {/* Template Selector */}
+                    <div className="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Select Template</label>
+                        <div className="flex gap-2">
+                            {['classic', 'modern', 'minimal'].map((template) => (
+                                <button
+                                    key={template}
+                                    onClick={() => setSelectedTemplate(template)}
+                                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all capitalize border ${selectedTemplate === template
+                                        ? 'bg-gray-900 text-white border-gray-900 shadow-md'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                                        }`}
+                                >
+                                    {template}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* ATS Score Panel */}
                     <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden">
                         <div className="flex justify-between items-end mb-2 relative z-10">
@@ -95,10 +202,10 @@ const Builder = () => {
                             />
                         </div>
 
-                        {/* Suggestions */}
+                        {/* Top 3 Improvements */}
                         {suggestions.length > 0 && (
                             <div className="bg-white p-4 rounded-lg border border-gray-200 relative z-10">
-                                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Suggestions</h4>
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Top 3 Improvements</h4>
                                 <ul className="space-y-2">
                                     {suggestions.map((s, i) => (
                                         <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
@@ -230,12 +337,15 @@ const Builder = () => {
                                 <InputGroup
                                     label="Description"
                                     as="textarea"
+                                    guidance={true}
+                                    formatBullets={true}
                                     value={exp.description}
                                     onChange={(e) => {
                                         const newExp = [...resumeData.experience];
                                         newExp[index].description = e.target.value;
                                         updateSection('experience', newExp);
                                     }}
+                                    placeholder="Write each achievement on a new line, then click '+ Bullets' to format\nExample:\nBuilt feature X that improved performance by 50%\nLed team of 5 engineers on migration project"
                                 />
                             </div>
                         ))}
@@ -267,12 +377,15 @@ const Builder = () => {
                                 <InputGroup
                                     label="Description"
                                     as="textarea"
+                                    guidance={true}
+                                    formatBullets={true}
                                     value={proj.description}
                                     onChange={(e) => {
                                         const newProj = [...resumeData.projects];
                                         newProj[index].description = e.target.value;
                                         updateSection('projects', newProj);
                                     }}
+                                    placeholder="Write each achievement on a new line, then click '+ Bullets' to format\nExample:\nDeveloped full-stack app with 1000+ users\nImplemented real-time features using WebSockets"
                                 />
                             </div>
                         ))}
@@ -344,13 +457,16 @@ const Builder = () => {
 
             {/* Right: Live Preview */}
             <div className="w-1/2 bg-gray-100 p-8 overflow-y-auto flex justify-center">
-                <div className="bg-white shadow-2xl w-[210mm] min-h-[297mm] p-[15mm] text-gray-900">
-                    {/* Resume Header */}
-                    <header className="border-b-2 border-gray-900 pb-6 mb-6">
-                        <h1 className="text-4xl font-bold font-serif text-gray-900 mb-2 uppercase tracking-wide">
+                <div className={`shadow-2xl w-[210mm] min-h-[297mm] p-[15mm] text-gray-900 bg-white
+                                ${selectedTemplate === 'classic' ? 'font-serif' : ''}
+                                ${selectedTemplate === 'minimal' ? 'font-mono' : ''}
+                                `}>
+                    {/* Header */}
+                    <header className={`pb-6 mb-6 ${selectedTemplate === 'classic' ? 'border-b-2 border-black text-center' : ''} ${selectedTemplate === 'modern' ? 'border-b-2 border-gray-900' : ''} ${selectedTemplate === 'minimal' ? 'pb-4 mb-4' : ''}`}>
+                        <h1 className={`text-4xl font-bold font-serif text-gray-900 mb-2 uppercase tracking-wide ${selectedTemplate === 'minimal' ? 'text-2xl lowercase tracking-tight font-sans' : ''} ${selectedTemplate === 'classic' ? 'font-serif' : 'font-heading'}`}>
                             {resumeData.personalInfo.fullName || "Your Name"}
                         </h1>
-                        <div className="text-sm text-gray-600 flex flex-wrap gap-3">
+                        <div className={`text-sm text-gray-600 flex flex-wrap gap-3 ${selectedTemplate === 'classic' ? 'justify-center' : ''}`}>
                             {resumeData.personalInfo.email && <span>{resumeData.personalInfo.email}</span>}
                             {resumeData.personalInfo.phone && <span>• {resumeData.personalInfo.phone}</span>}
                             {resumeData.personalInfo.location && <span>• {resumeData.personalInfo.location}</span>}
@@ -363,7 +479,7 @@ const Builder = () => {
                     {/* Summary */}
                     {resumeData.summary && (
                         <section className="mb-6">
-                            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-2">Summary</h2>
+                            <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-2 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''}  ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Summary</h2>
                             <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">{resumeData.summary}</p>
                         </section>
                     )}
@@ -371,7 +487,7 @@ const Builder = () => {
                     {/* Experience */}
                     {resumeData.experience.length > 0 && (
                         <section className="mb-6">
-                            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4">Experience</h2>
+                            <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Experience</h2>
                             <div className="space-y-4">
                                 {resumeData.experience.map((exp, i) => (
                                     <div key={i}>
@@ -390,7 +506,7 @@ const Builder = () => {
                     {/* Projects */}
                     {resumeData.projects.length > 0 && (
                         <section className="mb-6">
-                            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4">Projects</h2>
+                            <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Projects</h2>
                             <div className="space-y-4">
                                 {resumeData.projects.map((proj, i) => (
                                     <div key={i}>
@@ -405,7 +521,7 @@ const Builder = () => {
                     {/* Education */}
                     {resumeData.education.length > 0 && (
                         <section className="mb-6">
-                            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4">Education</h2>
+                            <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Education</h2>
                             {resumeData.education.map((edu, i) => (
                                 <div key={i} className="mb-2">
                                     <div className="flex justify-between items-baseline">
@@ -421,7 +537,7 @@ const Builder = () => {
                     {/* Skills */}
                     {resumeData.skills.length > 0 && resumeData.skills[0] !== "" && (
                         <section>
-                            <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-2">Skills</h2>
+                            <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-2 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Skills</h2>
                             <div className="text-sm text-gray-800 leading-relaxed">
                                 {resumeData.skills.join(', ')}
                             </div>

@@ -8,7 +8,7 @@ export const ResumeProvider = ({ children }) => {
     // 1. Initialize from localStorage or default
     const [resumeData, setResumeData] = useState(() => {
         const saved = localStorage.getItem('resumeBuilderData');
-        return saved ? JSON.parse(saved) : {
+        const defaultData = {
             personalInfo: {
                 fullName: '',
                 email: '',
@@ -24,10 +24,14 @@ export const ResumeProvider = ({ children }) => {
             projects: [],
             skills: []
         };
+        return saved ? { ...defaultData, ...JSON.parse(saved) } : defaultData;
     });
 
     const [atsScore, setAtsScore] = useState(0);
     const [suggestions, setSuggestions] = useState([]);
+    const [selectedTemplate, setSelectedTemplate] = useState(() => {
+        return localStorage.getItem('resumeBuilderTemplate') || 'modern';
+    });
 
     // 2. Autosave & Calculate Score on change
     React.useEffect(() => {
@@ -35,84 +39,77 @@ export const ResumeProvider = ({ children }) => {
         calculateScore(resumeData);
     }, [resumeData]);
 
+    React.useEffect(() => {
+        localStorage.setItem('resumeBuilderTemplate', selectedTemplate);
+    }, [selectedTemplate]);
+
     const calculateScore = (data) => {
         let score = 0;
-        const newSuggestions = [];
+        const improvements = []; // Priority list
+
+        // --- SCORING LOGIC (Stable from Phase 3) ---
 
         // Rule 1: Summary Length (40-120 words) (+15)
         const summaryWords = data.summary.trim().split(/\s+/).filter(w => w.length > 0).length;
-        if (summaryWords >= 40 && summaryWords <= 120) {
-            score += 15;
-        } else {
-            newSuggestions.push("Write a summary between 40-120 words.");
-        }
+        if (summaryWords >= 40 && summaryWords <= 120) score += 15;
 
         // Rule 2: Projects >= 2 (+10)
-        if (data.projects.length >= 2) {
-            score += 10;
-        } else {
-            newSuggestions.push("Add at least 2 projects.");
-        }
+        if (data.projects.length >= 2) score += 10;
 
         // Rule 3: Experience >= 1 (+10)
-        if (data.experience.length >= 1) {
-            score += 10;
-        } else {
-            newSuggestions.push("Add at least 1 work experience.");
-        }
+        if (data.experience.length >= 1) score += 10;
 
         // Rule 4: Skills >= 8 (+10)
-        if (data.skills.length >= 8) {
-            score += 10;
-        } else {
-            newSuggestions.push("Add more skills (target 8+).");
-        }
+        if (data.skills.length >= 8) score += 10;
 
         // Rule 5: GitHub or LinkedIn (+10)
-        if (data.personalInfo.linkedin || data.personalInfo.github) {
-            score += 10;
-        } else {
-            // Only suggest if neither exists
-            if (!data.personalInfo.linkedin && !data.personalInfo.github) {
-                newSuggestions.push("Add a LinkedIn or GitHub link.");
-            }
-        }
+        if (data.personalInfo.linkedin || data.personalInfo.github) score += 10;
 
         // Rule 6: Metrics in bullets (+15)
-        // Check experience descriptions and project descriptions
         const hasNumbers = [
             ...data.experience.map(e => e.description),
             ...data.projects.map(p => p.description)
         ].some(text => /\d+|%|\$|k\b/i.test(text || ''));
-
-        if (hasNumbers) {
-            score += 15;
-        } else {
-            newSuggestions.push("Add value metrics (numbers, %, $) to your descriptions.");
-        }
+        if (hasNumbers) score += 15;
 
         // Rule 7: Education Complete (+10)
-        // Checks if at least one education entry exists and has all fields
         const eduComplete = data.education.length > 0 && data.education.every(e => e.institution && e.degree && e.year);
-        if (eduComplete) {
-            score += 10;
-        } else {
-            if (data.education.length === 0) newSuggestions.push("Add your education details.");
-        }
+        if (eduComplete) score += 10;
 
-        // Base score for simply having data could be considered, but adhering strictly to rules:
-        // Current Max possible: 15+10+10+10+10+15+10 = 80. 
-        // Let's add specific field checks to reach 100 or normalize.
-        // User asked for "Cap at 100".
-        // Let's add "Contact Info" check (+20) to reach 100.
-        if (data.personalInfo.fullName && data.personalInfo.email && data.personalInfo.phone) {
-            score += 20;
-        } else {
-            newSuggestions.push("Complete your personal contact information.");
-        }
+        // Rule 8: Contact Info (+20) to cap at 100
+        if (data.personalInfo.fullName && data.personalInfo.email && data.personalInfo.phone) score += 20;
 
         setAtsScore(Math.min(100, score));
-        setSuggestions(newSuggestions.slice(0, 3)); // Max 3
+
+
+        // --- IMPROVEMENT LOGIC (Strict Priority) ---
+        // 1. If <2 projects → suggest adding project.
+        if (data.projects.length < 2) {
+            improvements.push("Add at least 2 projects to showcase your skills.");
+        }
+
+        // 2. If no numbers → suggest measurable impact.
+        if (!hasNumbers) {
+            improvements.push("Add measurable impact (numbers, %, $) to your descriptions.");
+        }
+
+        // 3. If summary <40 words → suggest expanding.
+        if (summaryWords < 40) {
+            improvements.push("Expand your summary to at least 40 words.");
+        }
+
+        // 4. If skills <8 → suggest expanding.
+        if (data.skills.length < 8) {
+            improvements.push("Add more skills (target at least 8).");
+        }
+
+        // 5. If no experience → suggest adding internship/project work.
+        if (data.experience.length === 0) {
+            improvements.push("Add work experience or internships.");
+        }
+
+        // Cap at 3 suggestions
+        setSuggestions(improvements.slice(0, 3));
     };
 
     const updatePersonalInfo = (field, value) => {
@@ -158,6 +155,7 @@ export const ResumeProvider = ({ children }) => {
                     company: 'TechFlow Solutions',
                     role: 'Senior Frontend Engineer',
                     duration: '2022 - Present',
+                    location: 'San Francisco, CA',
                     description: 'Led the migration of legacy codebase to React 18. Improved site performance by 40% using code-splitting and lazy loading. Managed a team of 4 engineers.'
                 },
                 {
@@ -165,6 +163,7 @@ export const ResumeProvider = ({ children }) => {
                     company: 'Creative Digital',
                     role: 'Web Developer Intern',
                     duration: 'Summer 2021',
+                    location: 'Remote',
                     description: 'Collaborated with designers to implement responsive landing pages. Assisted in backend API integration using Node.js.'
                 }
             ],
@@ -185,7 +184,16 @@ export const ResumeProvider = ({ children }) => {
     };
 
     return (
-        <ResumeContext.Provider value={{ resumeData, atsScore, suggestions, updatePersonalInfo, updateSection, loadSampleData }}>
+        <ResumeContext.Provider value={{
+            resumeData,
+            atsScore,
+            suggestions,
+            selectedTemplate,
+            setSelectedTemplate,
+            updatePersonalInfo,
+            updateSection,
+            loadSampleData
+        }}>
             {children}
         </ResumeContext.Provider>
     );

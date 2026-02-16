@@ -4,7 +4,7 @@ import Button from '../../components/ui/Button';
 import { Printer } from 'lucide-react';
 
 const Preview = () => {
-    const { resumeData } = useResume();
+    const { resumeData, selectedTemplate } = useResume();
 
     const handlePrint = () => {
         window.print();
@@ -18,13 +18,16 @@ const Preview = () => {
                 </Button>
             </div>
 
-            <div className="bg-white shadow-lg max-w-[210mm] mx-auto min-h-[297mm] p-[15mm] print:shadow-none print:w-full print:max-w-none print:p-[15mm] print:m-0 print:border-none text-gray-900 leading-normal">
+            <div className={`bg-white shadow-lg max-w-[210mm] mx-auto min-h-[297mm] p-[15mm] print:shadow-none print:w-full print:max-w-none print:p-[15mm] print:m-0 print:border-none text-gray-900 leading-normal
+                ${selectedTemplate === 'classic' ? 'font-serif' : ''}
+                ${selectedTemplate === 'minimal' ? 'font-mono' : ''}
+            `}>
                 {/* Resume Header */}
-                <header className="border-b-2 border-gray-900 pb-6 mb-6">
-                    <h1 className="text-4xl font-bold font-serif text-gray-900 mb-2 uppercase tracking-wide">
+                <header className={`pb-6 mb-6 ${selectedTemplate === 'classic' ? 'border-b-2 border-black text-center' : ''} ${selectedTemplate === 'modern' ? 'border-b-2 border-gray-900' : ''} ${selectedTemplate === 'minimal' ? 'pb-4 mb-4' : ''}`}>
+                    <h1 className={`text-4xl font-bold font-serif text-gray-900 mb-2 uppercase tracking-wide ${selectedTemplate === 'minimal' ? 'text-2xl lowercase tracking-tight font-sans' : ''} ${selectedTemplate === 'classic' ? 'font-serif' : 'font-heading'}`}>
                         {resumeData.personalInfo.fullName || "Your Name"}
                     </h1>
-                    <div className="text-sm text-gray-600 flex flex-wrap gap-3">
+                    <div className={`text-sm text-gray-600 flex flex-wrap gap-3 ${selectedTemplate === 'classic' ? 'justify-center' : ''}`}>
                         {resumeData.personalInfo.email && <span>{resumeData.personalInfo.email}</span>}
                         {resumeData.personalInfo.phone && <span>• {resumeData.personalInfo.phone}</span>}
                         {resumeData.personalInfo.location && <span>• {resumeData.personalInfo.location}</span>}
@@ -37,7 +40,7 @@ const Preview = () => {
                 {/* Summary */}
                 {resumeData.summary && (
                     <section className="mb-6">
-                        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-2">Summary</h2>
+                        <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-2 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''}  ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Summary</h2>
                         <p className="text-gray-800 text-sm leading-relaxed">{resumeData.summary}</p>
                     </section>
                 )}
@@ -45,7 +48,7 @@ const Preview = () => {
                 {/* Experience */}
                 {resumeData.experience.length > 0 && (
                     <section className="mb-6">
-                        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4">Experience</h2>
+                        <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Experience</h2>
                         <div className="space-y-4">
                             {resumeData.experience.map((exp, i) => (
                                 <div key={i}>
@@ -64,7 +67,7 @@ const Preview = () => {
                 {/* Projects */}
                 {resumeData.projects.length > 0 && (
                     <section className="mb-6">
-                        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4">Projects</h2>
+                        <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Projects</h2>
                         <div className="space-y-4">
                             {resumeData.projects.map((proj, i) => (
                                 <div key={i}>
@@ -79,7 +82,7 @@ const Preview = () => {
                 {/* Education */}
                 {resumeData.education.length > 0 && (
                     <section className="mb-6">
-                        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4">Education</h2>
+                        <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Education</h2>
                         {resumeData.education.map((edu, i) => (
                             <div key={i} className="mb-2">
                                 <div className="flex justify-between items-baseline">
@@ -95,7 +98,7 @@ const Preview = () => {
                 {/* Skills */}
                 {resumeData.skills.length > 0 && resumeData.skills[0] !== "" && (
                     <section>
-                        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-2">Skills</h2>
+                        <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-2 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Skills</h2>
                         <div className="text-sm text-gray-800 leading-relaxed">
                             {resumeData.skills.join(', ')}
                         </div>
