@@ -10,7 +10,8 @@ import {
     isProjectShipped,
     BUILD_STEPS,
     generateSubmissionText,
-    validateUrl
+    validateUrl,
+    saveChecklist
 } from '../services/proofService';
 
 const ProofPage = () => {
@@ -19,6 +20,20 @@ const ProofPage = () => {
     const [isShipped, setIsShipped] = useState(false);
     const [copied, setCopied] = useState(false);
     const [errors, setErrors] = useState({});
+
+    // Checklist State
+    const [checklist, setChecklist] = useState({
+        storage: false,
+        preview: false,
+        template: false,
+        color: false,
+        ats: false,
+        score_update: false,
+        export: false,
+        empty_state: false,
+        mobile: false,
+        console: false
+    });
 
     useEffect(() => {
         loadData();
@@ -29,6 +44,15 @@ const ProofPage = () => {
         setSubmission(getSubmission());
         setIsShipped(isProjectShipped());
     };
+
+    // Verify if all checklist items are checked
+    const allChecklistPassed = Object.values(checklist).every(Boolean);
+
+    // Effect to update global checklist status when local state changes
+    useEffect(() => {
+        saveChecklist(allChecklistPassed);
+        setIsShipped(isProjectShipped());
+    }, [checklist, submission, steps]); // Re-check shipping status heavily
 
     const handleUrlChange = (field, value) => {
         const newSubmission = { ...submission, [field]: value };
@@ -41,8 +65,10 @@ const ProofPage = () => {
         } else {
             setErrors(prev => ({ ...prev, [field]: null }));
         }
+    };
 
-        setIsShipped(isProjectShipped());
+    const toggleChecklist = (key) => {
+        setChecklist(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
     const handleCopy = () => {
@@ -51,9 +77,6 @@ const ProofPage = () => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
-
-    const completedCount = Object.values(steps).filter(Boolean).length;
-    const progress = Math.round((completedCount / 8) * 100);
 
     return (
         <div>
@@ -64,52 +87,51 @@ const ProofPage = () => {
 
             <div className="space-y-8">
                 {/* Status Banner */}
-                <div className={`p-6 rounded-lg border-2 flex items-center gap-4 ${isShipped
-                        ? 'bg-green-50 border-green-200 text-green-900'
-                        : 'bg-amber-50 border-amber-200 text-amber-900'
+                <div className={`p-6 rounded-lg border-2 flex items-center gap-4 transition-colors duration-500 ${isShipped
+                    ? 'bg-green-50 border-green-200 text-green-900'
+                    : 'bg-white border-gray-200 text-gray-600'
                     }`}>
-                    {isShipped ? <CheckCircle2 size={32} /> : <Rocket size={32} />}
+                    {isShipped ? <CheckCircle2 size={32} className="text-green-600" /> : <Package size={32} className="text-gray-400" />}
                     <div>
                         <h2 className="text-xl font-bold font-heading">
-                            {isShipped ? 'Project Shipped!' : 'Build In Progress'}
+                            {isShipped ? 'Project 3 Shipped Successfully.' : 'Build In Progress'}
                         </h2>
-                        <p className="opacity-90">
+                        <p className="opacity-90 text-sm">
                             {isShipped
-                                ? 'All steps completed and artifacts provided. Ready for review.'
-                                : 'Complete all 8 steps and provide deployment links to ship.'}
+                                ? 'All systems operational. Ready for submission.'
+                                : 'Complete all steps, pass the checklist, and provide artifacts to ship.'}
                         </p>
                     </div>
                 </div>
 
-                {/* Progress Overview */}
+                {/* Final Verification Checklist */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Build Track Progress</CardTitle>
+                        <CardTitle>1. Final Verification Checklist</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="mb-4 flex justify-between text-sm font-semibold">
-                            <span>{completedCount} of 8 Steps Completed</span>
-                            <span>{progress}%</span>
-                        </div>
-                        <div className="h-3 bg-gray-100 rounded-full overflow-hidden mb-6">
-                            <div
-                                className="h-full bg-primary transition-all duration-500"
-                                style={{ width: `${progress}%` }}
-                            />
-                        </div>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {BUILD_STEPS.map((step, i) => (
-                                <div
-                                    key={step.id}
-                                    className={`p-3 rounded border flex items-center gap-3 ${steps[step.id]
-                                            ? 'bg-green-50 border-green-100 text-green-900'
-                                            : 'bg-gray-50 border-gray-100 text-gray-500'
-                                        }`}
-                                >
-                                    {steps[step.id] ? <CheckCircle2 size={18} /> : <span className="w-[18px] text-center text-xs font-bold">{i + 1}</span>}
-                                    <span className="font-medium">{step.label}</span>
-                                </div>
+                            {[
+                                { id: 'storage', label: 'All form sections save to localStorage' },
+                                { id: 'preview', label: 'Live preview updates in real-time' },
+                                { id: 'template', label: 'Template switching preserves data' },
+                                { id: 'color', label: 'Color theme persists after refresh' },
+                                { id: 'ats', label: 'ATS score calculates correctly' },
+                                { id: 'score_update', label: 'Score updates live on edit' },
+                                { id: 'export', label: 'Export buttons work (copy/download)' },
+                                { id: 'empty_state', label: 'Empty states handled gracefully' },
+                                { id: 'mobile', label: 'Mobile responsive layout works' },
+                                { id: 'console', label: 'No console errors on any page' }
+                            ].map(item => (
+                                <label key={item.id} className="flex items-center gap-3 p-3 border rounded hover:bg-gray-50 cursor-pointer transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        checked={checklist[item.id]}
+                                        onChange={() => toggleChecklist(item.id)}
+                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                                    />
+                                    <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                                </label>
                             ))}
                         </div>
                     </CardContent>
@@ -118,7 +140,7 @@ const ProofPage = () => {
                 {/* Artifacts Input */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Deployment Artifacts</CardTitle>
+                        <CardTitle>2. Deployment Artifacts</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {[
@@ -132,7 +154,7 @@ const ProofPage = () => {
                                 </label>
                                 <input
                                     type="text"
-                                    className={`w-full p-2 border rounded focus:ring-2 focus:ring-primary focus:outline-none ${errors[field.id] ? 'border-red-300' : 'border-gray-300'
+                                    className={`w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all ${errors[field.id] ? 'border-red-300' : 'border-gray-300'
                                         }`}
                                     placeholder={field.placeholder}
                                     value={submission[field.id]}
@@ -151,20 +173,34 @@ const ProofPage = () => {
                 {/* Final Submission */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Final Submission</CardTitle>
+                        <CardTitle>3. Final Submission</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-gray-600 mb-4">
                             Copy this text to submit your project proof. Button enabled only when shipped.
                         </p>
                         <Button
-                            className="w-full justify-center"
+                            className={`w-full justify-center transition-all ${isShipped ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-300 cursor-not-allowed'}`}
                             disabled={!isShipped}
                             onClick={handleCopy}
                         >
-                            {copied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
+                            {copied ? <CheckCircle2 size={16} className="mr-2" /> : <Copy size={16} className="mr-2" />}
                             {copied ? 'Copied to Clipboard' : 'Copy Final Submission'}
                         </Button>
+                        {!isShipped && (
+                            <div className="text-center mt-3 space-y-1">
+                                {!allChecklistPassed && (
+                                    <p className="text-xs text-amber-600 flex items-center justify-center gap-1">
+                                        <AlertCircle size={12} /> Complete all checklist items
+                                    </p>
+                                )}
+                                {(!validateUrl(submission.lovableUrl) || !validateUrl(submission.githubUrl) || !validateUrl(submission.deployedUrl)) && (
+                                    <p className="text-xs text-amber-600 flex items-center justify-center gap-1">
+                                        <AlertCircle size={12} /> Provide all 3 valid URLs (https://...)
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

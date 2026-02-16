@@ -5,6 +5,7 @@
 
 const STEPS_KEY = 'rb_steps_completion';
 const SUBMISSION_KEY = 'rb_final_submission';
+const CHECKLIST_KEY = 'rb_checklist_passed';
 
 /**
  * 8 Build Steps
@@ -105,17 +106,33 @@ export function saveSubmission(submission) {
 }
 
 /**
+ * Get Checklist Status
+ */
+export function getChecklist() {
+    return localStorage.getItem(CHECKLIST_KEY) === 'true';
+}
+
+/**
+ * Save Checklist Status
+ */
+export function saveChecklist(passed) {
+    localStorage.setItem(CHECKLIST_KEY, passed);
+    window.dispatchEvent(new Event('storage'));
+}
+
+/**
  * Validate URL format
  * @param {string} url - URL to validate
  * @returns {boolean} - True if valid
  */
 export function validateUrl(url) {
     if (!url || typeof url !== 'string') return false;
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    const trimmed = url.trim();
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
         return false;
     }
     try {
-        new URL(url);
+        new URL(trimmed);
         return true;
     } catch (error) {
         return false;
@@ -145,7 +162,7 @@ export function allArtifactsProvided() {
  * @returns {boolean}
  */
 export function isProjectShipped() {
-    return allStepsComplete() && allArtifactsProvided();
+    return allArtifactsProvided() && getChecklist();
 }
 
 /**
@@ -165,17 +182,21 @@ export function getCompletionStatus() {
  */
 export function generateSubmissionText() {
     const { lovableUrl, githubUrl, deployedUrl } = getSubmission();
+    const checklistPassed = getChecklist();
 
     return `------------------------------------------
-AI Resume Builder — Build Track Submission
+AI Resume Builder — Final Submission
 
-Lovable Project: ${lovableUrl || '[Not provided]'}
-GitHub Repository: ${githubUrl || '[Not provided]'}
-Live Deployment: ${deployedUrl || '[Not provided]'}
+Lovable Project: ${lovableUrl}
+GitHub Repository: ${githubUrl}
+Live Deployment: ${deployedUrl}
 
-Completion Status:
-- 8/8 Steps Completed
-- Project Shipped
+Core Capabilities:
+- Structured resume builder
+- Deterministic ATS scoring
+- Template switching
+- PDF export with clean formatting
+- Persistence + validation checklist
 ------------------------------------------`;
 }
 
