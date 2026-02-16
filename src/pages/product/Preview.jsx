@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useResume } from '../../context/ResumeContext';
 import Button from '../../components/ui/Button';
+import CircularProgress from '../../components/ui/CircularProgress';
 import { Printer, Copy, AlertTriangle, Globe, Github, Check } from 'lucide-react';
 
 const Preview = () => {
-    const { resumeData, selectedTemplate, selectedColor } = useResume();
+    const { resumeData, selectedTemplate, selectedColor, atsScore, suggestions } = useResume();
     const [showCopySuccess, setShowCopySuccess] = useState(false);
     const [showDownloadToast, setShowDownloadToast] = useState(false);
 

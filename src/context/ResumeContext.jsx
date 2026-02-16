@@ -54,73 +54,58 @@ export const ResumeProvider = ({ children }) => {
 
     const calculateScore = (data) => {
         let score = 0;
-        // Priority list moved to end of function
-
-        // --- SCORING LOGIC (Stable from Phase 3) ---
-
-        // Rule 1: Summary Length (40-120 words) (+15)
-        const summaryWords = data.summary.trim().split(/\s+/).filter(w => w.length > 0).length;
-        if (summaryWords >= 40 && summaryWords <= 120) score += 15;
-
-        // Rule 2: Projects >= 2 (+10)
-        if (data.projects.length >= 2) score += 10;
-
-        // Rule 3: Experience >= 1 (+10)
-        if (data.experience.length >= 1) score += 10;
-
-        // Rule 4: Skills >= 8 (+10)
-        const totalSkills = Array.isArray(data.skills)
-            ? data.skills.length
-            : (data.skills?.technical?.length || 0) + (data.skills?.soft?.length || 0) + (data.skills?.tools?.length || 0);
-
-        if (totalSkills >= 8) score += 10;
-
-        // Rule 5: GitHub or LinkedIn (+10)
-        if (data.personalInfo.linkedin || data.personalInfo.github) score += 10;
-
-        // Rule 6: Education Complete (+10)
-        const eduComplete = data.education.length > 0 && data.education.every(e => e.institution && e.degree && e.year);
-        if (eduComplete) score += 10;
-
-        // Rule 7: Contact Info (+20) to cap at 100
-        if (data.personalInfo.fullName && data.personalInfo.email && data.personalInfo.phone) score += 20;
-
-        setAtsScore(Math.min(100, score));
-
-        // --- SUGGESTIONS LOGIC ---
         const improvements = [];
 
-        // 1. Projects
-        if (data.projects.length < 2) {
-            improvements.push("Add at least 2 projects to showcase your skills.");
-        }
+        // Rule 1: Name provided (+10)
+        if (data.personalInfo.fullName?.trim()) score += 10;
+        else improvements.push("Add your full name (+10)");
 
-        // 2. Metrics Check
-        const hasNumbers = [
-            ...data.experience.map(e => e.description),
-            ...data.projects.map(p => p.description)
-        ].some(text => /\d+|%|\$|k\b/i.test(text || ''));
+        // Rule 2: Email provided (+10)
+        if (data.personalInfo.email?.trim()) score += 10;
+        else improvements.push("Add a professional email (+10)");
 
-        if (!hasNumbers) {
-            improvements.push("Add measurable impact (numbers, %, $) to your descriptions.");
-        }
+        // Rule 3: Summary > 50 chars (+10)
+        if (data.summary?.length > 50) score += 10;
+        else improvements.push("Expand summary to >50 characters (+10)");
 
-        // 3. Summary Length
-        if (summaryWords < 40) {
-            improvements.push("Expand your summary to at least 40 words.");
-        }
+        // Rule 4: Experience entry exists & has bullets/newlines (+15)
+        const hasDetailedExp = data.experience.some(exp => exp.description?.includes('\n') || exp.description?.includes('•') || exp.description?.length > 20);
+        if (hasDetailedExp) score += 15;
+        else improvements.push("Add detailed status/bullets to experience (+15)");
 
-        // 4. Skills
-        if (totalSkills < 8) {
-            improvements.push("Add more skills (aim for 8+ total).");
-        }
+        // Rule 5: Education entry exists (+10)
+        if (data.education.length > 0) score += 10;
+        else improvements.push("Add education details (+10)");
 
-        // 5. Experience
-        if (data.experience.length === 0) {
-            improvements.push("Add work experience or internships.");
-        }
+        // Rule 6: Skills count >= 5 (+10)
+        const totalSkills = (data.skills?.technical?.length || 0) + (data.skills?.soft?.length || 0) + (data.skills?.tools?.length || 0);
+        if (totalSkills >= 5) score += 10;
+        else improvements.push(`Add ${5 - totalSkills} more skills (+10)`);
 
-        setSuggestions(improvements.slice(0, 3));
+        // Rule 7: Project entry exists (+10)
+        if (data.projects.length > 0) score += 10;
+        else improvements.push("Add at least one project (+10)");
+
+        // Rule 8: Phone provided (+5)
+        if (data.personalInfo.phone?.trim()) score += 5;
+        else improvements.push("Add phone number (+5)");
+
+        // Rule 9: LinkedIn provided (+5)
+        if (data.personalInfo.linkedin?.trim()) score += 5;
+        else improvements.push("Add LinkedIn profile (+5)");
+
+        // Rule 10: GitHub provided (+5)
+        if (data.personalInfo.github?.trim()) score += 5;
+        else improvements.push("Add GitHub profile (+5)");
+
+        // Rule 11: Summary contains action verbs (+10)
+        const actionVerbs = ['built', 'led', 'designed', 'developed', 'managed', 'created', 'improved', 'optimized', 'engineered', 'implemented'];
+        const hasActionVerbs = actionVerbs.some(verb => data.summary?.toLowerCase().includes(verb));
+        if (hasActionVerbs) score += 10;
+        else improvements.push("Use action verbs (Built, Led, Designed) in summary (+10)");
+
+        setAtsScore(Math.min(100, score));
+        setSuggestions(improvements);
     };
 
     const updatePersonalInfo = (field, value) => {
