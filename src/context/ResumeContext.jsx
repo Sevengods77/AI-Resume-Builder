@@ -45,7 +45,7 @@ export const ResumeProvider = ({ children }) => {
 
     const calculateScore = (data) => {
         let score = 0;
-        const improvements = []; // Priority list
+        // Priority list moved to end of function
 
         // --- SCORING LOGIC (Stable from Phase 3) ---
 
@@ -60,55 +60,57 @@ export const ResumeProvider = ({ children }) => {
         if (data.experience.length >= 1) score += 10;
 
         // Rule 4: Skills >= 8 (+10)
-        if (data.skills.length >= 8) score += 10;
+        const totalSkills = Array.isArray(data.skills)
+            ? data.skills.length
+            : (data.skills?.technical?.length || 0) + (data.skills?.soft?.length || 0) + (data.skills?.tools?.length || 0);
+
+        if (totalSkills >= 8) score += 10;
 
         // Rule 5: GitHub or LinkedIn (+10)
         if (data.personalInfo.linkedin || data.personalInfo.github) score += 10;
 
-        // Rule 6: Metrics in bullets (+15)
-        const hasNumbers = [
-            ...data.experience.map(e => e.description),
-            ...data.projects.map(p => p.description)
-        ].some(text => /\d+|%|\$|k\b/i.test(text || ''));
-        if (hasNumbers) score += 15;
-
-        // Rule 7: Education Complete (+10)
+        // Rule 6: Education Complete (+10)
         const eduComplete = data.education.length > 0 && data.education.every(e => e.institution && e.degree && e.year);
         if (eduComplete) score += 10;
 
-        // Rule 8: Contact Info (+20) to cap at 100
+        // Rule 7: Contact Info (+20) to cap at 100
         if (data.personalInfo.fullName && data.personalInfo.email && data.personalInfo.phone) score += 20;
 
         setAtsScore(Math.min(100, score));
 
+        // --- SUGGESTIONS LOGIC ---
+        const improvements = [];
 
-        // --- IMPROVEMENT LOGIC (Strict Priority) ---
-        // 1. If <2 projects → suggest adding project.
+        // 1. Projects
         if (data.projects.length < 2) {
             improvements.push("Add at least 2 projects to showcase your skills.");
         }
 
-        // 2. If no numbers → suggest measurable impact.
+        // 2. Metrics Check
+        const hasNumbers = [
+            ...data.experience.map(e => e.description),
+            ...data.projects.map(p => p.description)
+        ].some(text => /\d+|%|\$|k\b/i.test(text || ''));
+
         if (!hasNumbers) {
             improvements.push("Add measurable impact (numbers, %, $) to your descriptions.");
         }
 
-        // 3. If summary <40 words → suggest expanding.
+        // 3. Summary Length
         if (summaryWords < 40) {
             improvements.push("Expand your summary to at least 40 words.");
         }
 
-        // 4. If skills <8 → suggest expanding.
-        if (data.skills.length < 8) {
-            improvements.push("Add more skills (target at least 8).");
+        // 4. Skills
+        if (totalSkills < 8) {
+            improvements.push("Add more skills (aim for 8+ total).");
         }
 
-        // 5. If no experience → suggest adding internship/project work.
+        // 5. Experience
         if (data.experience.length === 0) {
             improvements.push("Add work experience or internships.");
         }
 
-        // Cap at 3 suggestions
         setSuggestions(improvements.slice(0, 3));
     };
 
@@ -132,54 +134,65 @@ export const ResumeProvider = ({ children }) => {
     const loadSampleData = () => {
         setResumeData({
             personalInfo: {
-                fullName: 'Alex Morgan',
-                email: 'alex.morgan@example.com',
-                phone: '(555) 123-4567',
+                fullName: 'Alex Johnson',
+                email: 'alex.j@example.com',
+                phone: '+1 (555) 123-4567',
                 location: 'San Francisco, CA',
-                website: 'alexmorgan.dev',
-                linkedin: 'linkedin.com/in/alexmorgan',
-                github: 'github.com/alexmorgan'
+                linkedin: 'linkedin.com/in/alexj',
+                github: 'github.com/alexj',
+                website: 'alexj.dev',
+                role: 'Senior Full Stack Developer'
             },
-            summary: 'Experienced Full Stack Developer with a passion for building scalable web applications and intuitive user interfaces. Proven track record of delivering high-quality code and leading development teams. I have increased performance by 40% and reduced costs by $10k annually through efficient engineering practices.',
-            education: [
-                {
-                    id: 1,
-                    institution: 'University of California, Berkeley',
-                    degree: 'B.S. Computer Science',
-                    year: '2018 - 2022'
-                }
-            ],
+            summary: 'Results-driven Full Stack Developer with 5+ years of experience in building scalable web applications. Expert in React and Node.js with a strong focus on code quality and performance optimization.',
             experience: [
                 {
                     id: 1,
                     company: 'TechFlow Solutions',
-                    role: 'Senior Frontend Engineer',
-                    duration: '2022 - Present',
+                    role: 'Senior Developer',
+                    duration: '2021 - Present',
                     location: 'San Francisco, CA',
-                    description: 'Led the migration of legacy codebase to React 18. Improved site performance by 40% using code-splitting and lazy loading. Managed a team of 4 engineers.'
+                    description: '• Led a team of 5 engineers to rebuild the core legacy platform using React and Node.js, improving load times by 40%\n• implemented CI/CD pipelines reducing deployment time by 60%\n• Mentored junior developers and conducted code reviews'
                 },
                 {
                     id: 2,
-                    company: 'Creative Digital',
-                    role: 'Web Developer Intern',
-                    duration: 'Summer 2021',
+                    company: 'StartUp Inc',
+                    role: 'Frontend Developer',
+                    duration: '2019 - 2021',
                     location: 'Remote',
-                    description: 'Collaborated with designers to implement responsive landing pages. Assisted in backend API integration using Node.js.'
+                    description: '• Developed responsive UI components using React and Tailwind CSS\n• Collaborated with UX designers to implement pixel-perfect designs\n• Optimized application performance achieving a 98/100 Lighthouse score'
                 }
             ],
             projects: [
                 {
                     id: 1,
-                    name: 'E-commerce Dashboard',
-                    description: 'A comprehensive analytics dashboard for online retailers. Built with React, D3.js, and Firebase. Processed 10k+ transactions daily.'
+                    name: 'E-Commerce Dashboard',
+                    description: 'Built a comprehensive analytics dashboard for e-commerce store owners to track sales and inventory in real-time.',
+                    techStack: ['React', 'D3.js', 'Firebase'],
+                    liveUrl: 'https://demo-dashboard.com',
+                    githubUrl: 'https://github.com/alexj/dashboard'
                 },
                 {
                     id: 2,
-                    name: 'TaskMaster',
-                    description: 'Productivity application with real-time collaboration features using Socket.io and MongoDB.'
+                    name: 'Task Management API',
+                    description: 'Designed and implemented a RESTful API for a collaborative task management tool supporting real-time updates.',
+                    techStack: ['Node.js', 'Express', 'MongoDB', 'Socket.io'],
+                    liveUrl: '',
+                    githubUrl: 'https://github.com/alexj/task-api'
                 }
             ],
-            skills: ['React', 'TypeScript', 'Node.js', 'Tailwind CSS', 'PostgreSQL', 'AWS', 'Docker', 'Git']
+            education: [
+                {
+                    id: 1,
+                    institution: 'University of Technology',
+                    degree: 'BS in Computer Science',
+                    year: '2015 - 2019'
+                }
+            ],
+            skills: {
+                technical: ['JavaScript', 'React', 'Node.js', 'Python', 'SQL', 'AWS'],
+                soft: ['Leadership', 'Communication', 'Problem Solving'],
+                tools: ['Git', 'Docker', 'Jira', 'Figma']
+            }
         });
     };
 

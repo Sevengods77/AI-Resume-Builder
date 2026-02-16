@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useResume } from '../../context/ResumeContext';
 import Button from '../../components/ui/Button';
-import { Printer, Copy, AlertTriangle } from 'lucide-react';
+import { Printer, Copy, AlertTriangle, Globe, Github } from 'lucide-react';
 
 const Preview = () => {
     const { resumeData, selectedTemplate } = useResume();
@@ -40,7 +40,12 @@ const Preview = () => {
         if (projects.length > 0) {
             text += `PROJECTS\n`;
             projects.forEach(proj => {
-                text += `${proj.name}\n${proj.description}\n\n`;
+                text += `${proj.name}`;
+                if (proj.liveUrl) text += ` | Live: ${proj.liveUrl}`;
+                if (proj.githubUrl) text += ` | GitHub: ${proj.githubUrl}`;
+                text += `\n`;
+                if (proj.techStack && proj.techStack.length > 0) text += `Tech: ${proj.techStack.join(', ')}\n`;
+                text += `${proj.description}\n\n`;
             });
         }
 
@@ -52,8 +57,11 @@ const Preview = () => {
             text += '\n';
         }
 
-        if (skills.length > 0 && skills[0] !== "") {
-            text += `SKILLS\n${skills.join(', ')}\n`;
+        if (skills) {
+            text += `SKILLS\n`;
+            if (skills.technical && skills.technical.length > 0) text += `Technical: ${skills.technical.join(', ')}\n`;
+            if (skills.soft && skills.soft.length > 0) text += `Soft: ${skills.soft.join(', ')}\n`;
+            if (skills.tools && skills.tools.length > 0) text += `Tools: ${skills.tools.join(', ')}\n`;
         }
 
         navigator.clipboard.writeText(text).then(() => {
@@ -61,6 +69,15 @@ const Preview = () => {
             setTimeout(() => setShowCopySuccess(false), 2000);
         });
     };
+
+    const SkillGroup = ({ title, skills }) => (
+        skills && skills.length > 0 ? (
+            <div className="mb-2 break-inside-avoid">
+                <span className="font-bold text-gray-800 text-sm mr-2">{title}:</span>
+                <span className="text-sm text-gray-700">{skills.join(', ')}</span>
+            </div>
+        ) : null
+    );
 
     return (
         <div className="bg-gray-100 min-h-screen py-8 print:bg-white print:p-0 print:m-0 print:min-h-0">
@@ -140,7 +157,30 @@ const Preview = () => {
                         <div className="space-y-4">
                             {resumeData.projects.map((proj, i) => (
                                 <div key={i} className="break-inside-avoid">
-                                    <h3 className="font-bold text-gray-900 mb-1">{proj.name}</h3>
+                                    <div className="flex justify-between items-baseline mb-1">
+                                        <h3 className="font-bold text-gray-900">{proj.name}</h3>
+                                        <div className="flex gap-2">
+                                            {proj.liveUrl && (
+                                                <a href={proj.liveUrl.startsWith('http') ? proj.liveUrl : `https://${proj.liveUrl}`} target="_blank" rel="noreferrer" className="text-gray-500 hover:text-black">
+                                                    <Globe size={12} />
+                                                </a>
+                                            )}
+                                            {proj.githubUrl && (
+                                                <a href={proj.githubUrl.startsWith('http') ? proj.githubUrl : `https://${proj.githubUrl}`} target="_blank" rel="noreferrer" className="text-gray-500 hover:text-black">
+                                                    <Github size={12} />
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {proj.techStack && proj.techStack.length > 0 && (
+                                        <div className="mb-2 flex flex-wrap gap-1">
+                                            {proj.techStack.map((tech, t) => (
+                                                <span key={t} className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded border border-gray-200">
+                                                    {tech}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                     <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{proj.description}</p>
                                 </div>
                             ))}
@@ -165,11 +205,16 @@ const Preview = () => {
                 )}
 
                 {/* Skills */}
-                {resumeData.skills.length > 0 && resumeData.skills[0] !== "" && (
+                {resumeData.skills && (resumeData.skills.technical?.length > 0 || resumeData.skills.soft?.length > 0 || resumeData.skills.tools?.length > 0) && (
                     <section className="break-inside-avoid">
                         <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-2 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Skills</h2>
                         <div className="text-sm text-gray-800 leading-relaxed">
-                            {resumeData.skills.join(', ')}
+                            <SkillGroup title="Technical" skills={resumeData.skills.technical} />
+                            <SkillGroup title="Soft Skills" skills={resumeData.skills.soft} />
+                            <SkillGroup title="Tools" skills={resumeData.skills.tools} />
+
+                            {/* Fallback for old array format if migration fails */}
+                            {Array.isArray(resumeData.skills) && resumeData.skills.join(', ')}
                         </div>
                     </section>
                 )}
