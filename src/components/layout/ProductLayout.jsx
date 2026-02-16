@@ -9,7 +9,7 @@ const ProductLayout = () => {
 
     return (
         <div className="min-h-screen bg-white font-body text-gray-900 flex flex-col">
-            <nav className="h-16 border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 bg-white/90 backdrop-blur-sm z-50">
+            <nav className="h-16 border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 bg-white/90 backdrop-blur-sm z-50 print:hidden">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-black text-white rounded-lg flex items-center justify-center font-heading font-bold text-xl">
                         AI
@@ -21,8 +21,8 @@ const ProductLayout = () => {
                     <Link
                         to="/builder"
                         className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${isActive('/builder')
-                                ? 'bg-white shadow-sm text-black'
-                                : 'text-gray-500 hover:text-gray-900'
+                            ? 'bg-white shadow-sm text-black'
+                            : 'text-gray-500 hover:text-gray-900'
                             }`}
                     >
                         Builder
@@ -30,8 +30,8 @@ const ProductLayout = () => {
                     <Link
                         to="/preview"
                         className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${isActive('/preview')
-                                ? 'bg-white shadow-sm text-black'
-                                : 'text-gray-500 hover:text-gray-900'
+                            ? 'bg-white shadow-sm text-black'
+                            : 'text-gray-500 hover:text-gray-900'
                             }`}
                     >
                         Preview
@@ -39,8 +39,8 @@ const ProductLayout = () => {
                     <Link
                         to="/proof"
                         className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${isActive('/proof')
-                                ? 'bg-white shadow-sm text-black'
-                                : 'text-gray-500 hover:text-gray-900'
+                            ? 'bg-white shadow-sm text-black'
+                            : 'text-gray-500 hover:text-gray-900'
                             }`}
                     >
                         Proof
