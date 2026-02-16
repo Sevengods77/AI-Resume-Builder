@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useResume } from '../../context/ResumeContext';
 import Button from '../../components/ui/Button';
-import { Download, RotateCcw, Plus, Trash2, Globe, Github, Sparkles, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Download, RotateCcw, Plus, Trash2, Globe, Github, Sparkles, X, ChevronDown, ChevronUp, Check } from 'lucide-react';
 
 const FormSection = ({ title, children }) => (
     <div className="mb-8 border-b border-gray-100 pb-8 last:border-0">
@@ -9,6 +9,8 @@ const FormSection = ({ title, children }) => (
         {children}
     </div>
 );
+
+
 
 const TagInput = ({ label, tags = [], onAdd, onRemove, placeholder }) => {
     const [input, setInput] = useState('');
@@ -161,10 +163,17 @@ const Builder = () => {
         suggestions,
         selectedTemplate,
         setSelectedTemplate,
+        selectedColor,
+        setSelectedColor,
         updatePersonalInfo,
         updateSection,
         loadSampleData
     } = useResume();
+
+    // Debug logging
+    React.useEffect(() => {
+        console.log('Builder: selectedColor updated to:', selectedColor);
+    }, [selectedColor]);
 
     // UI Local State for Suggest Button loading
     const [isSuggestingSkills, setIsSuggestingSkills] = useState(false);
@@ -273,19 +282,91 @@ const Builder = () => {
                 <div className="p-8 max-w-2xl mx-auto">
 
                     {/* Template Selector */}
-                    <div className="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="mb-6">
                         <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Select Template</label>
-                        <div className="flex gap-2">
-                            {['classic', 'modern', 'minimal'].map((template) => (
+                        <div className="grid grid-cols-3 gap-3">
+                            {[
+                                { id: 'classic', label: 'Classic' },
+                                { id: 'modern', label: 'Modern' },
+                                { id: 'minimal', label: 'Minimal' }
+                            ].map((t) => (
                                 <button
-                                    key={template}
-                                    onClick={() => setSelectedTemplate(template)}
-                                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all capitalize border ${selectedTemplate === template
-                                        ? 'bg-gray-900 text-white border-gray-900 shadow-md'
-                                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                                    key={t.id}
+                                    onClick={() => setSelectedTemplate(t.id)}
+                                    className={`relative group rounded-lg border-2 overflow-hidden transition-all ${selectedTemplate === t.id
+                                        ? 'border-blue-600 ring-2 ring-blue-100'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
-                                    {template}
+                                    {/* Mini Preview Placeholder */}
+                                    <div className="h-24 bg-gray-50 relative">
+                                        {/* Abstract Layout Sketch */}
+                                        {t.id === 'classic' && (
+                                            <div className="p-2 space-y-1 opacity-50">
+                                                <div className="h-2 w-16 bg-gray-400 mx-auto rounded"></div>
+                                                <div className="h-0.5 w-full bg-gray-300 rounded"></div>
+                                                <div className="h-1 w-full bg-gray-200 rounded"></div>
+                                                <div className="h-1 w-20 bg-gray-200 rounded"></div>
+                                            </div>
+                                        )}
+                                        {t.id === 'modern' && (
+                                            <div className="flex h-full">
+                                                <div className="w-[30%] bg-gray-200 h-full"></div>
+                                                <div className="w-[70%] p-2 space-y-1 opacity-50">
+                                                    <div className="h-2 w-16 bg-gray-400 rounded"></div>
+                                                    <div className="h-1 w-full bg-gray-200 rounded"></div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {t.id === 'minimal' && (
+                                            <div className="p-2 space-y-2 opacity-50 text-left">
+                                                <div className="h-3 w-12 bg-gray-800 rounded"></div>
+                                                <div className="h-1 w-full bg-gray-200 rounded"></div>
+                                                <div className="h-1 w-16 bg-gray-200 rounded"></div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="py-2 text-xs font-semibold text-center bg-white border-t border-gray-100">
+                                        {t.label}
+                                    </div>
+                                    {selectedTemplate === t.id && (
+                                        <div className="absolute top-2 right-2 w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+                                            <Check size={10} className="text-white" />
+                                        </div>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Color Theme Picker */}
+                    <div className="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Color Theme</label>
+                        <div className="flex gap-4">
+                            {[
+                                { name: 'Teal', value: 'hsl(168, 60%, 40%)' },
+                                { name: 'Navy', value: 'hsl(220, 60%, 35%)' },
+                                { name: 'Burgundy', value: 'hsl(345, 60%, 35%)' },
+                                { name: 'Forest', value: 'hsl(150, 50%, 30%)' },
+                                { name: 'Charcoal', value: 'hsl(0, 0%, 25%)' }
+                            ].map((color) => (
+                                <button
+                                    key={color.name}
+                                    type="button"
+                                    onClick={() => {
+                                        console.log('Setting color to:', color.value);
+                                        setSelectedColor(color.value);
+                                    }}
+                                    className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 focus:outline-none ${selectedColor === color.value
+                                        ? 'border-gray-900 scale-110 shadow-sm'
+                                        : 'border-white shadow-sm'
+                                        }`}
+                                    style={{ backgroundColor: color.value }}
+                                    title={color.name}
+                                >
+                                    {selectedColor === color.value && (
+                                        <Check size={14} className="text-white mx-auto" />
+                                    )}
                                 </button>
                             ))}
                         </div>
@@ -652,109 +733,243 @@ const Builder = () => {
 
             {/* Right: Live Preview */}
             <div className="w-1/2 bg-gray-100 p-8 overflow-y-auto flex justify-center">
-                <div className={`shadow-2xl w-[210mm] min-h-[297mm] p-[15mm] text-gray-900 bg-white
-                                ${selectedTemplate === 'classic' ? 'font-serif' : ''}
-                                ${selectedTemplate === 'minimal' ? 'font-mono' : ''}
+                <div className={`shadow-2xl w-[210mm] min-h-[297mm] text-gray-900 bg-white overflow-hidden
+                                ${selectedTemplate === 'classic' ? 'font-serif p-[15mm]' : ''}
+                                ${selectedTemplate === 'minimal' ? 'font-mono p-[15mm]' : ''}
+                                ${selectedTemplate === 'modern' ? 'font-sans' : ''}
                                 `}>
-                    {/* Header */}
-                    <header className={`pb-6 mb-6 ${selectedTemplate === 'classic' ? 'border-b-2 border-black text-center' : ''} ${selectedTemplate === 'modern' ? 'border-b-2 border-gray-900' : ''} ${selectedTemplate === 'minimal' ? 'pb-4 mb-4' : ''}`}>
-                        <h1 className={`text-4xl font-bold font-serif text-gray-900 mb-2 uppercase tracking-wide ${selectedTemplate === 'minimal' ? 'text-2xl lowercase tracking-tight font-sans' : ''} ${selectedTemplate === 'classic' ? 'font-serif' : 'font-heading'}`}>
-                            {resumeData.personalInfo.fullName || "Your Name"}
-                        </h1>
-                        <div className={`text-sm text-gray-600 flex flex-wrap gap-3 ${selectedTemplate === 'classic' ? 'justify-center' : ''}`}>
-                            {resumeData.personalInfo.email && <span>{resumeData.personalInfo.email}</span>}
-                            {resumeData.personalInfo.phone && <span>• {resumeData.personalInfo.phone}</span>}
-                            {resumeData.personalInfo.location && <span>• {resumeData.personalInfo.location}</span>}
-                            {resumeData.personalInfo.linkedin && <span>• <a href={`https://${resumeData.personalInfo.linkedin}`} target="_blank" rel="noreferrer" className="hover:underline">{resumeData.personalInfo.linkedin.replace(/^https?:\/\//, '')}</a></span>}
-                            {resumeData.personalInfo.github && <span>• <a href={`https://${resumeData.personalInfo.github}`} target="_blank" rel="noreferrer" className="hover:underline">{resumeData.personalInfo.github.replace(/^https?:\/\//, '')}</a></span>}
-                            {resumeData.personalInfo.website && <span>• <a href={`https://${resumeData.personalInfo.website}`} target="_blank" rel="noreferrer" className="hover:underline">{resumeData.personalInfo.website.replace(/^https?:\/\//, '')}</a></span>}
-                        </div>
-                    </header>
 
-                    {/* Summary */}
-                    {resumeData.summary && (
-                        <section className="mb-6">
-                            <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-2 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''}  ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Summary</h2>
-                            <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">{resumeData.summary}</p>
-                        </section>
-                    )}
-
-                    {/* Experience */}
-                    {resumeData.experience.length > 0 && (
-                        <section className="mb-6">
-                            <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Experience</h2>
-                            <div className="space-y-4">
-                                {resumeData.experience.map((exp, i) => (
-                                    <div key={i}>
-                                        <div className="flex justify-between items-baseline mb-1">
-                                            <h3 className="font-bold text-gray-900">{exp.company}</h3>
-                                            <span className="text-xs text-gray-500 font-medium">{exp.duration}</span>
-                                        </div>
-                                        <div className="text-sm text-gray-700 italic mb-2">{exp.role}</div>
-                                        <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{exp.description}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    )}
-
-                    {/* Projects - Simplified Preview for now, will call tool to update Preview.jsx next */}
-                    {resumeData.projects.length > 0 && (
-                        <section className="mb-6">
-                            <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Projects</h2>
-                            <div className="space-y-4">
-                                {resumeData.projects.map((proj, i) => (
-                                    <div key={i}>
-                                        <h3 className="font-bold text-gray-900 mb-1">{proj.name}</h3>
-                                        <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{proj.description}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    )}
-
-                    {/* Education */}
-                    {resumeData.education.length > 0 && (
-                        <section className="mb-6">
-                            <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Education</h2>
-                            {resumeData.education.map((edu, i) => (
-                                <div key={i} className="mb-2">
-                                    <div className="flex justify-between items-baseline">
-                                        <h3 className="font-bold text-gray-900">{edu.institution}</h3>
-                                        <span className="text-xs text-gray-500 font-medium">{edu.year}</span>
-                                    </div>
-                                    <div className="text-sm text-gray-700">{edu.degree}</div>
+                    {/* MODERN LAYOUT */}
+                    {selectedTemplate === 'modern' && (
+                        <div className="flex min-h-[297mm]">
+                            {/* Sidebar */}
+                            <div className="w-[32%] p-8 text-white" style={{ backgroundColor: selectedColor }}>
+                                <div className="mb-8">
+                                    <h1 className="text-3xl font-bold font-heading mb-2 leading-tight">
+                                        {resumeData.personalInfo.fullName || "Your Name"}
+                                    </h1>
+                                    <p className="text-white/80 text-sm font-medium">{resumeData.personalInfo.role}</p>
                                 </div>
-                            ))}
-                        </section>
-                    )}
 
-                    {/* Skills */}
-                    {resumeData.skills && (resumeData.skills.technical?.length > 0 || resumeData.skills.soft?.length > 0 || resumeData.skills.tools?.length > 0) && (
-                        <section>
-                            <h2 className={`text-sm font-bold uppercase tracking-widest text-gray-500 mb-2 ${selectedTemplate === 'classic' ? 'text-center border-b border-gray-200 pb-1 text-black' : ''} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}>Skills</h2>
-                            <div className="text-sm text-gray-800 leading-relaxed">
-                                {resumeData.skills.technical?.length > 0 && (
-                                    <div className="mb-1">
-                                        <span className="font-bold mr-2">Technical:</span>
-                                        {resumeData.skills.technical.join(', ')}
-                                    </div>
+                                <div className="space-y-6 text-sm">
+                                    <section>
+                                        <h3 className="font-bold uppercase tracking-wider mb-3 text-white/70 border-b border-white/20 pb-1 text-xs">Contact</h3>
+                                        <div className="space-y-2 text-white/90">
+                                            <div className="break-all">{resumeData.personalInfo.email}</div>
+                                            <div>{resumeData.personalInfo.phone}</div>
+                                            <div>{resumeData.personalInfo.location}</div>
+                                            {resumeData.personalInfo.linkedin && <div className="break-all text-xs opacity-90">{resumeData.personalInfo.linkedin.replace(/^https?:\/\//, '')}</div>}
+                                            {resumeData.personalInfo.github && <div className="break-all text-xs opacity-90">{resumeData.personalInfo.github.replace(/^https?:\/\//, '')}</div>}
+                                            {resumeData.personalInfo.website && <div className="break-all text-xs opacity-90">{resumeData.personalInfo.website.replace(/^https?:\/\//, '')}</div>}
+                                        </div>
+                                    </section>
+
+                                    <section>
+                                        <h3 className="font-bold uppercase tracking-wider mb-3 text-white/70 border-b border-white/20 pb-1 text-xs">Skills</h3>
+                                        {['Technical', 'Soft', 'Tools'].map(category => {
+                                            const key = category.toLowerCase() === 'soft' ? 'soft' : category.toLowerCase();
+                                            const skills = resumeData.skills?.[key];
+                                            if (!skills?.length) return null;
+                                            return (
+                                                <div key={key} className="mb-3">
+                                                    <span className="font-bold text-sm block mb-1 text-white/90">{category}</span>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {skills.map((s, i) => (
+                                                            <span key={i} className="text-xs px-2 py-1 rounded bg-white/20 text-white">
+                                                                {s}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </section>
+
+                                    {resumeData.education.length > 0 && (
+                                        <section>
+                                            <h3 className="font-bold uppercase tracking-wider mb-3 text-white/70 border-b border-white/20 pb-1 text-xs">Education</h3>
+                                            {resumeData.education.map((edu, i) => (
+                                                <div key={i} className="mb-3">
+                                                    <div className="font-bold text-white">{edu.institution}</div>
+                                                    <div className="text-xs text-white/80">{edu.degree}</div>
+                                                    <div className="text-xs text-white/60">{edu.year}</div>
+                                                </div>
+                                            ))}
+                                        </section>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Main Content */}
+                            <div className="w-[68%] p-8">
+                                {resumeData.summary && (
+                                    <section className="mb-8">
+                                        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-3 border-b border-gray-100 pb-1" style={{ color: selectedColor }}>Profile</h2>
+                                        <p className="text-gray-800 text-sm leading-relaxed">{resumeData.summary}</p>
+                                    </section>
                                 )}
-                                {resumeData.skills.soft?.length > 0 && (
-                                    <div className="mb-1">
-                                        <span className="font-bold mr-2">Soft Skills:</span>
-                                        {resumeData.skills.soft.join(', ')}
-                                    </div>
+
+                                {resumeData.experience.length > 0 && (
+                                    <section className="mb-8">
+                                        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 border-b border-gray-100 pb-1" style={{ color: selectedColor }}>Experience</h2>
+                                        <div className="space-y-5">
+                                            {resumeData.experience.map((exp, i) => (
+                                                <div key={i}>
+                                                    <div className="flex justify-between items-baseline mb-1">
+                                                        <h3 className="font-bold text-gray-900 text-base">{exp.role}</h3>
+                                                        <span className="text-xs text-gray-500 font-medium">{exp.duration}</span>
+                                                    </div>
+                                                    <div className="text-sm font-medium text-gray-700 mb-2">{exp.company} | {exp.location}</div>
+                                                    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{exp.description}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
                                 )}
-                                {resumeData.skills.tools?.length > 0 && (
-                                    <div className="mb-1">
-                                        <span className="font-bold mr-2">Tools:</span>
-                                        {resumeData.skills.tools.join(', ')}
-                                    </div>
+
+                                {resumeData.projects.length > 0 && (
+                                    <section>
+                                        <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 border-b border-gray-100 pb-1" style={{ color: selectedColor }}>Projects</h2>
+                                        <div className="space-y-5">
+                                            {resumeData.projects.map((proj, i) => (
+                                                <div key={i}>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <h3 className="font-bold text-gray-900">{proj.name}</h3>
+                                                        <div className="flex gap-2">
+                                                            {proj.liveUrl && <a href={proj.liveUrl} target="_blank" rel="noreferrer"><Globe size={12} className="text-gray-400 hover:text-gray-900" /></a>}
+                                                            {proj.githubUrl && <a href={proj.githubUrl} target="_blank" rel="noreferrer"><Github size={12} className="text-gray-400 hover:text-gray-900" /></a>}
+                                                        </div>
+                                                    </div>
+                                                    {proj.techStack && (
+                                                        <div className="flex flex-wrap gap-1 mb-2">
+                                                            {proj.techStack.map((t, k) => (
+                                                                <span key={k} className="text-[10px] px-1.5 py-0.5 bg-gray-50 border border-gray-100 rounded text-gray-500">{t}</span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    <p className="text-sm text-gray-600 leading-relaxed">{proj.description}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
                                 )}
                             </div>
-                        </section>
+                        </div>
                     )}
+
+                    {/* CLASSIC & MINIMAL LAYOUTS */}
+                    {selectedTemplate !== 'modern' && (
+                        <>
+                            {/* Header */}
+                            <header className={`pb-6 mb-6 ${selectedTemplate === 'classic' ? 'border-b-2 text-center' : ''} ${selectedTemplate === 'minimal' ? 'pb-4 mb-4' : ''}`}
+                                style={{ borderColor: selectedTemplate === 'classic' ? selectedColor : 'transparent' }}>
+                                <h1 className={`text-4xl font-bold font-serif text-gray-900 mb-2 uppercase tracking-wide ${selectedTemplate === 'minimal' ? 'text-2xl lowercase tracking-tight font-sans' : ''} ${selectedTemplate === 'classic' ? 'font-serif' : 'font-heading'}`}
+                                    style={{ color: selectedTemplate === 'minimal' ? selectedColor : 'inherit' }}>
+                                    {resumeData.personalInfo.fullName || "Your Name"}
+                                </h1>
+                                <div className={`text-sm text-gray-600 flex flex-wrap gap-3 ${selectedTemplate === 'classic' ? 'justify-center' : ''}`}>
+                                    {resumeData.personalInfo.email && <span>{resumeData.personalInfo.email}</span>}
+                                    {resumeData.personalInfo.phone && <span>• {resumeData.personalInfo.phone}</span>}
+                                    {resumeData.personalInfo.location && <span>• {resumeData.personalInfo.location}</span>}
+                                    {resumeData.personalInfo.linkedin && <span>• {resumeData.personalInfo.linkedin.replace(/^https?:\/\//, '')}</span>}
+                                </div>
+                            </header>
+
+                            {/* Summary */}
+                            {resumeData.summary && (
+                                <section className="mb-6">
+                                    <h2 className={`text-sm font-bold uppercase tracking-widest mb-2 ${selectedTemplate === 'classic' ? 'text-center border-b pb-1 text-black' : 'text-gray-500'}  ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}
+                                        style={{ color: selectedTemplate !== 'classic' ? selectedColor : 'inherit', borderColor: selectedColor }}>
+                                        Summary
+                                    </h2>
+                                    <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">{resumeData.summary}</p>
+                                </section>
+                            )}
+
+                            {/* Experience */}
+                            {resumeData.experience.length > 0 && (
+                                <section className="mb-6">
+                                    <h2 className={`text-sm font-bold uppercase tracking-widest mb-4 ${selectedTemplate === 'classic' ? 'text-center border-b pb-1 text-black' : 'text-gray-500'} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}
+                                        style={{ color: selectedTemplate !== 'classic' ? selectedColor : 'inherit', borderColor: selectedColor }}>
+                                        Experience
+                                    </h2>
+                                    <div className="space-y-4">
+                                        {resumeData.experience.map((exp, i) => (
+                                            <div key={i}>
+                                                <div className="flex justify-between items-baseline mb-1">
+                                                    <h3 className="font-bold text-gray-900">{exp.company}</h3>
+                                                    <span className="text-xs text-gray-500 font-medium">{exp.duration}</span>
+                                                </div>
+                                                <div className="text-sm italic mb-2" style={{ color: selectedColor }}>{exp.role}</div>
+                                                <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{exp.description}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* Projects */}
+                            {resumeData.projects.length > 0 && (
+                                <section className="mb-6">
+                                    <h2 className={`text-sm font-bold uppercase tracking-widest mb-4 ${selectedTemplate === 'classic' ? 'text-center border-b pb-1 text-black' : 'text-gray-500'} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}
+                                        style={{ color: selectedTemplate !== 'classic' ? selectedColor : 'inherit', borderColor: selectedColor }}>
+                                        Projects
+                                    </h2>
+                                    <div className="space-y-4">
+                                        {resumeData.projects.map((proj, i) => (
+                                            <div key={i}>
+                                                <h3 className="font-bold text-gray-900 mb-1">{proj.name}</h3>
+                                                <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{proj.description}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* Education */}
+                            {resumeData.education.length > 0 && (
+                                <section className="mb-6">
+                                    <h2 className={`text-sm font-bold uppercase tracking-widest mb-4 ${selectedTemplate === 'classic' ? 'text-center border-b pb-1 text-black' : 'text-gray-500'} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}
+                                        style={{ color: selectedTemplate !== 'classic' ? selectedColor : 'inherit', borderColor: selectedColor }}>
+                                        Education
+                                    </h2>
+                                    {resumeData.education.map((edu, i) => (
+                                        <div key={i} className="mb-2">
+                                            <div className="flex justify-between items-baseline">
+                                                <h3 className="font-bold text-gray-900">{edu.institution}</h3>
+                                                <span className="text-xs text-gray-500 font-medium">{edu.year}</span>
+                                            </div>
+                                            <div className="text-sm" style={{ color: selectedColor }}>{edu.degree}</div>
+                                        </div>
+                                    ))}
+                                </section>
+                            )}
+
+                            {/* Skills */}
+                            {resumeData.skills && (resumeData.skills.technical?.length > 0 || resumeData.skills.soft?.length > 0 || resumeData.skills.tools?.length > 0) && (
+                                <section>
+                                    <h2 className={`text-sm font-bold uppercase tracking-widest mb-2 ${selectedTemplate === 'classic' ? 'text-center border-b pb-1 text-black' : 'text-gray-500'} ${selectedTemplate === 'minimal' ? 'text-black lowercase tracking-tighter' : ''}`}
+                                        style={{ color: selectedTemplate !== 'classic' ? selectedColor : 'inherit', borderColor: selectedColor }}>
+                                        Skills
+                                    </h2>
+                                    <div className="text-sm text-gray-800 leading-relaxed">
+                                        {['Technical', 'Soft', 'Tools'].map(category => {
+                                            const key = category.toLowerCase() === 'soft' ? 'soft' : category.toLowerCase();
+                                            const skills = resumeData.skills?.[key];
+                                            if (!skills?.length) return null;
+                                            return (
+                                                <div key={key} className="mb-1">
+                                                    <span className="font-bold mr-2">{category}:</span>
+                                                    {skills.join(', ')}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </section>
+                            )}
+                        </>
+                    )}
+
                 </div>
             </div>
         </div>

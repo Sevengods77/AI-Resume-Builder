@@ -33,6 +33,11 @@ export const ResumeProvider = ({ children }) => {
         return localStorage.getItem('resumeBuilderTemplate') || 'modern';
     });
 
+    // Default Teal: hsl(168, 60%, 40%)
+    const [selectedColor, setSelectedColor] = useState(() => {
+        return localStorage.getItem('resumeBuilderColor') || 'hsl(168, 60%, 40%)';
+    });
+
     // 2. Autosave & Calculate Score on change
     React.useEffect(() => {
         localStorage.setItem('resumeBuilderData', JSON.stringify(resumeData));
@@ -42,6 +47,10 @@ export const ResumeProvider = ({ children }) => {
     React.useEffect(() => {
         localStorage.setItem('resumeBuilderTemplate', selectedTemplate);
     }, [selectedTemplate]);
+
+    React.useEffect(() => {
+        localStorage.setItem('resumeBuilderColor', selectedColor);
+    }, [selectedColor]);
 
     const calculateScore = (data) => {
         let score = 0;
@@ -203,6 +212,8 @@ export const ResumeProvider = ({ children }) => {
             suggestions,
             selectedTemplate,
             setSelectedTemplate,
+            selectedColor,
+            setSelectedColor,
             updatePersonalInfo,
             updateSection,
             loadSampleData
